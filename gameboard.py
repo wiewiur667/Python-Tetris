@@ -4,7 +4,7 @@ class GameBoard:
     def __init__(self, width, height):
         self.width = width
         self.height = height
-        self.movingObjectsBoard = list()
+        self.activeObjectsBoard = list()
         self.staticObjectsBoard = list()
 
         for x in range(0,self.height):

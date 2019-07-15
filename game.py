@@ -4,31 +4,25 @@ import gameEngine
 import objects
 import keyboard
 import time
+import config
 #import pygameRenderer
 
 is_bottom_colliding = False
 is_side_colliding = False
 
-def check_collisions(engine, gameBoard):
+tempCounter = 0
+fallingSpeed = config.configFallingSpeed
+quitRequested = False
+
+engine = None
+
+def renderFrame(x, y, gameBoard, gameObject):
     global is_bottom_colliding
     global is_side_colliding
+    global tempCounter
+    global fallingSpeed
 
-    is_side_colliding = False
-    is_bottom_colliding = False
-
-    is_bottom_colliding = engine.detect_bottom_collision(
-        gameBoard.movingObjectsBoard,
-        gameBoard.staticObjectsBoard)
-
-    # is_side_colliding = engine.detect_side_collision(
-    #     gameBoard.movingObjectsBoard,
-    #     gameBoard.staticObjectsBoard)
-
-
-def renderFrame(x, y, engine, gameBoard, gameObject):
-    global is_bottom_colliding
-    global is_side_colliding
-
+    tempCounter = tempCounter + 1
     consoleRenderer.ConsoleRenderer.clrBuffer()
     # engine.move_object_y(engine.move_object_x(gameObject, x), y))
 
@@ -40,106 +34,83 @@ def renderFrame(x, y, engine, gameBoard, gameObject):
         'currentGameObjectWidth: ' + str(engine.activeObjectsize[0]) + ' currentGameObjectHeight: ' + str(engine.activeObjectsize[1]), 28)
 
     consoleRenderer.ConsoleRenderer.renderText(
-        'Bottom collision: ' + str(is_bottom_colliding) + ' Side collision: ' + str(is_side_colliding), 29)
+        'Bottom collision: ' + str(engine.bottomCollision) + ' Side collision: ' + engine.sideCollision, 29)
+    
+    consoleRenderer.ConsoleRenderer.renderText(str(tempCounter), 30)
 
+    consoleRenderer.ConsoleRenderer.renderText(str(fallingSpeed), 31)
     consoleRenderer.ConsoleRenderer.renderBorder(gameBoard)
     consoleRenderer.ConsoleRenderer.renderBoard(
         engine.merge_boards(
             gameBoard.staticObjectsBoard,
-            gameBoard.movingObjectsBoard
+            gameBoard.activeObjectsBoard
         ))
 
     consoleRenderer.ConsoleRenderer.blit()
-    time.sleep(0.2)
+    time.sleep(1/config.fps)
 
 
 def start(width=10, height=20):
     global is_bottom_colliding
     global is_side_colliding
+    global tempCounter
+    global engine
+    global fallingSpeed
+    global quitRequested
 
     gameBoard = gameboard.GameBoard(width, height)
     engine = gameEngine.GameEngine(gameBoard)
-    quitRequested = False
-    x = 0
-    y = 0
-    activeObject = engine.create_random_object()
+    consoleRenderer.ConsoleRenderer.start()
+
+    engine.create_random_object()
+    engine.assign_next_object_to_current()
+
+    renderFrame(
+        x=engine.activeObjectPosition[0], 
+        y=engine.activeObjectPosition[1],            
+        gameBoard=gameBoard, 
+        gameObject=engine.activeObject)
+
+    keyboard.hook(move_object)
 
     while(not quitRequested):
-        quitRequested = keyboard.is_pressed('q')
-
         is_side_colliding = False
         is_bottom_colliding = False
 
-        if keyboard.is_pressed('a'):
-            x -= 1
+        if tempCounter >= fallingSpeed:
+            engine.move_object(0, 1)
+            tempCounter = 0
+        
+        renderFrame(
+                x=engine.activeObjectPosition[0], 
+                y=engine.activeObjectPosition[1],            
+                gameBoard=gameBoard, 
+                gameObject=engine.activeObject)
 
-            #Limit to left board edge
-            if x < 0: 
-                x = 0
 
-            gameBoard.movingObjectsBoard = engine.move_object(activeObject, x, y)
-            check_collisions(engine, gameBoard)
+def move_object(event):
+    global fallingSpeed
+    global quitRequested
 
-            if is_side_colliding:
-                x += 1
-                gameBoard.movingObjectsBoard = engine.move_object(activeObject, x, y)
+    if event.event_type == 'up':
+        if event.name =='q':
+            quitRequested = True
+
+
+        
+        if event.name == 's':
+            fallingSpeed = config.configFallingSpeed
+
+    if event.event_type == 'down':
+        if event.name == 's':
+            fallingSpeed = 1  
+
+        if event.name == 'a':
+            engine.move_object(-1, 0)
+
+        if event.name == 'd':
+            engine.move_object(1, 0)
             
-            renderFrame(x=x, 
-                        y=y, 
-                        engine=engine,
-                        gameBoard=gameBoard, 
-                        gameObject=activeObject)
-
-        if keyboard.is_pressed('d'):
-            x += 1
-            
-            #Limit to right board edge
-            if x >= len(gameBoard.staticObjectsBoard[0]) - 1: 
-                x = len(gameBoard.staticObjectsBoard[0]) - 1
-
-            gameBoard.movingObjectsBoard = engine.move_object(activeObject, x, y)
-            check_collisions(engine, gameBoard)
-
-            if is_side_colliding:
-                x -= 1
-                gameBoard.movingObjectsBoard = engine.move_object(activeObject, x, y)
-
-            renderFrame(x=x, 
-                        y=y, 
-                        engine=engine,
-                        gameBoard=gameBoard, 
-                        gameObject=activeObject)
-
-        if keyboard.is_pressed('s'):
-            y += 1
-
-            #Limit to bottom board edge
-            if len(gameBoard.movingObjectsBoard) >= len(gameBoard.staticObjectsBoard) - 1:
-                y = y
-
-            gameBoard.movingObjectsBoard = engine.move_object(activeObject, x, y)
-            check_collisions(engine, gameBoard)
-
-            if is_bottom_colliding:
-                y -= 1
-                gameBoard.movingObjectsBoard = engine.move_object(activeObject, x, y)
-
-            renderFrame(x=x, 
-                        y=y, 
-                        engine=engine,
-                        gameBoard=gameBoard, 
-                        gameObject=activeObject)
-
-        if keyboard.is_pressed('w'):
-            #check_collisions(engine, gameBoard)
-            #if not is_side_colliding or not is_bottom_colliding: 
-            
-            activeObject = engine.rotate_object(activeObject)
-            gameBoard.movingObjectsBoard = engine.move_object(activeObject, x, y)
-            renderFrame(x=x, 
-                        y=y, 
-                        engine=engine,
-                        gameBoard=gameBoard, 
-                        gameObject=activeObject)
-
+        if event.name == 'w':
+            engine.rotate_object()
 start()

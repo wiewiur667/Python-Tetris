@@ -13,12 +13,13 @@ class ConsoleRenderer:
     verticalBorderStyle = '░'
     topBorderStyle = '░'
     bottomBorderStyle = '░'
-    stdsrc = curses.initscr()
+    stdsrc = None
     # .newwin(ConsoleRenderer.height,ConsoleRenderer.width,0,0)
-
+    
     @staticmethod
-    def start(board):
-        ConsoleRenderer.renderBoard(board)
+    def start():
+        os.system("mode con lines=40")
+        ConsoleRenderer.stdsrc = curses.initscr()
 
     @staticmethod
     def renderText(text, line=26):
