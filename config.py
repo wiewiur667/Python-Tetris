@@ -1,2 +1,2 @@
 fps = 60
-configFallingSpeed = 10
+configFallingSpeed = 20

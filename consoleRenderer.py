@@ -38,7 +38,7 @@ class ConsoleRenderer:
             gameBoard.height + 1, 0, ConsoleRenderer.bottomBorderStyle * (gameBoard.width * 2 + ConsoleRenderer.borderWidth * 2))
 
     @staticmethod
-    def renderBoard(board):
+    def renderBoard(board, offsetX = 0, offsetY= 0):
         #if(isinstance(boards, list)):
         for row_index, row in enumerate(board):
             for cell_index, cell in enumerate(row):
@@ -46,8 +46,8 @@ class ConsoleRenderer:
                 if cell == 1:
                     sign = u'██'
                 ConsoleRenderer.stdsrc.addstr(
-                    row_index  + ConsoleRenderer.borderWidth, 
-                    cell_index * 2 + ConsoleRenderer.borderWidth, 
+                    offsetY + row_index + ConsoleRenderer.borderWidth, 
+                    offsetX + cell_index * 2 + ConsoleRenderer.borderWidth, 
                     sign, 
                     0)
 

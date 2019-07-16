@@ -13,6 +13,7 @@ is_side_colliding = False
 tempCounter = 0
 fallingSpeed = config.configFallingSpeed
 quitRequested = False
+nextObject = list()
 
 engine = None
 
@@ -37,15 +38,18 @@ def renderFrame(x, y, gameBoard, gameObject):
         'Bottom collision: ' + str(engine.bottomCollision) + ' Side collision: ' + engine.sideCollision, 29)
     
     consoleRenderer.ConsoleRenderer.renderText(str(tempCounter), 30)
-
     consoleRenderer.ConsoleRenderer.renderText(str(fallingSpeed), 31)
+
     consoleRenderer.ConsoleRenderer.renderBorder(gameBoard)
     consoleRenderer.ConsoleRenderer.renderBoard(
         engine.merge_boards(
             gameBoard.staticObjectsBoard,
             gameBoard.activeObjectsBoard
         ))
-
+    consoleRenderer.ConsoleRenderer.renderBoard(
+        engine.nextObject,
+        23,1
+    ) 
     consoleRenderer.ConsoleRenderer.blit()
     time.sleep(1/config.fps)
 
@@ -81,6 +85,8 @@ def start(width=10, height=20):
             engine.move_object(0, 1)
             tempCounter = 0
         
+        engine.remove_full_lines(gameBoard)
+
         renderFrame(
                 x=engine.activeObjectPosition[0], 
                 y=engine.activeObjectPosition[1],            
@@ -96,8 +102,6 @@ def move_object(event):
         if event.name =='q':
             quitRequested = True
 
-
-        
         if event.name == 's':
             fallingSpeed = config.configFallingSpeed
 

@@ -26,12 +26,12 @@ class GameEngine:
     def initialize_object_top_center(self):
         self.bottomCollision = False
         self.gameBoard.activeObjectsBoard = list()
-        self.create_random_object()
         self.assign_next_object_to_current()
         self.activeObjectPosition[0] = math.floor(self.gameBoard.width/2)
         self.activeObjectPosition[1] = -1
         self.move_object(0, 0)
-
+        self.create_random_object()
+        
     def move_object(self, x, y):
 
         if self.sideCollision == "left" and x > 0:
@@ -77,6 +77,15 @@ class GameEngine:
             temp_board_2[row_index] = [a or b for a,
                                        b in zip(temp_board_2[row_index], row)]
         return temp_board_2
+
+    def remove_full_lines(self, board):
+        linesToRemove = self.__detect_full_line(board)
+        tempBoard = list()
+        if len(linesToRemove) > 0:
+            tempBoard = board.staticObjectsBoard
+            for line in linesToRemove:
+                del tempBoard[line]
+                tempBoard.insert(0,[0]*board.width)
 
     def __move_object_x(self, offset):
         paddedObject = list()
@@ -135,3 +144,10 @@ class GameEngine:
                     if cell_index == len(board.staticObjectsBoard[0]) - 1 or board.staticObjectsBoard[row_index][cell_index + 1] == 1:
                         colliding = "right"
         return colliding
+
+    def __detect_full_line(self, board):
+        lines = list()
+        for index, row in enumerate(board.staticObjectsBoard):
+            if row == [1]*board.width:
+                lines.append(index)
+        return lines
