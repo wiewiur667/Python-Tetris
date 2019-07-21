@@ -1,5 +1,5 @@
-import gameboard
-import consoleRenderer
+from gameboard import GameBoard
+from consoleRenderer import ConsoleRenderer
 import gameEngine
 import objects
 import keyboard
@@ -11,68 +11,72 @@ is_bottom_colliding = False
 is_side_colliding = False
 
 tempCounter = 0
+
 fallingSpeed = config.configFallingSpeed
+
 quitRequested = False
 nextObject = list()
 
 engine = None
 
+pause = False
+
 def renderFrame(x, y, gameBoard, gameObject):
-    global is_bottom_colliding
-    global is_side_colliding
     global tempCounter
-    global fallingSpeed
 
     tempCounter = tempCounter + 1
-    consoleRenderer.ConsoleRenderer.clrBuffer()
-    # engine.move_object_y(engine.move_object_x(gameObject, x), y))
+    ConsoleRenderer.clrBuffer()
 
-    consoleRenderer.ConsoleRenderer.renderText(
+    ConsoleRenderer.renderText(
         'BoardWidth: ' + str(gameBoard.width) + ' BoardHeight: ' + str(gameBoard.height))
-    consoleRenderer.ConsoleRenderer.renderText(
+    ConsoleRenderer.renderText(
         'X: ' + str(x) + ' Y: ' + str(y), 27)
-    consoleRenderer.ConsoleRenderer.renderText(
+    ConsoleRenderer.renderText(
         'currentGameObjectWidth: ' + str(engine.activeObjectsize[0]) + ' currentGameObjectHeight: ' + str(engine.activeObjectsize[1]), 28)
 
-    consoleRenderer.ConsoleRenderer.renderText(
+    ConsoleRenderer.renderText(
         'Bottom collision: ' + str(engine.bottomCollision) + ' Side collision: ' + engine.sideCollision, 29)
-    
-    consoleRenderer.ConsoleRenderer.renderText(str(tempCounter), 30)
-    consoleRenderer.ConsoleRenderer.renderText(str(fallingSpeed), 31)
 
-    consoleRenderer.ConsoleRenderer.renderBorder(gameBoard)
-    consoleRenderer.ConsoleRenderer.renderBoard(
+    ConsoleRenderer.renderText(str(tempCounter), 30)
+    ConsoleRenderer.renderText(str(fallingSpeed), 31)
+
+    ConsoleRenderer.renderBorder(gameBoard)
+    ConsoleRenderer.renderBoard(
         engine.merge_boards(
             gameBoard.staticObjectsBoard,
             gameBoard.activeObjectsBoard
         ))
-    consoleRenderer.ConsoleRenderer.renderBoard(
-        engine.nextObject,
-        23,1
-    ) 
-    consoleRenderer.ConsoleRenderer.blit()
-    time.sleep(1/config.fps)
 
+    #Render Next Object
+    ConsoleRenderer.renderBoard(
+        engine.nextObject,
+        23, 0
+    )
+    #Render Score
+    ConsoleRenderer.renderText("{:010d}".format(engine.scoreManager.currentScore), 5, 24)
+    ConsoleRenderer.blit()
+
+    time.sleep(1/config.fps)
 
 def start(width=10, height=20):
     global is_bottom_colliding
     global is_side_colliding
     global tempCounter
     global engine
-    global fallingSpeed
-    global quitRequested
 
-    gameBoard = gameboard.GameBoard(width, height)
+    gameBoard = GameBoard(width, height)
     engine = gameEngine.GameEngine(gameBoard)
-    consoleRenderer.ConsoleRenderer.start()
+    ConsoleRenderer.start()
+
+    #enigne configuration
 
     engine.create_random_object()
     engine.assign_next_object_to_current()
 
     renderFrame(
-        x=engine.activeObjectPosition[0], 
-        y=engine.activeObjectPosition[1],            
-        gameBoard=gameBoard, 
+        x=engine.activeObjectPosition[0],
+        y=engine.activeObjectPosition[1],
+        gameBoard=gameBoard,
         gameObject=engine.activeObject)
 
     keyboard.hook(move_object)
@@ -81,25 +85,27 @@ def start(width=10, height=20):
         is_side_colliding = False
         is_bottom_colliding = False
 
-        if tempCounter >= fallingSpeed:
-            engine.move_object(0, 1)
-            tempCounter = 0
-        
-        engine.remove_full_lines(gameBoard)
+        if not engine.gameOver and not pause:
+            if tempCounter >= fallingSpeed:
+                engine.move_object(0, 1)
+                tempCounter = 0
+                engine.remove_full_lines(gameBoard)
 
-        renderFrame(
-                x=engine.activeObjectPosition[0], 
-                y=engine.activeObjectPosition[1],            
-                gameBoard=gameBoard, 
+            renderFrame(
+                x=engine.activeObjectPosition[0],
+                y=engine.activeObjectPosition[1],
+                gameBoard=gameBoard,
                 gameObject=engine.activeObject)
+
 
 
 def move_object(event):
     global fallingSpeed
     global quitRequested
+    global pause
 
     if event.event_type == 'up':
-        if event.name =='q':
+        if event.name == 'q':
             quitRequested = True
 
         if event.name == 's':
@@ -107,14 +113,19 @@ def move_object(event):
 
     if event.event_type == 'down':
         if event.name == 's':
-            fallingSpeed = 1  
+            fallingSpeed = 1
 
-        if event.name == 'a':
-            engine.move_object(-1, 0)
+        if not pause and not engine.gameOver:
+            if event.name == 'a':
+                engine.move_object(-1, 0)
 
-        if event.name == 'd':
-            engine.move_object(1, 0)
-            
-        if event.name == 'w':
-            engine.rotate_object()
+            if event.name == 'd':
+                engine.move_object(1, 0)
+
+            if event.name == 'w':
+                engine.rotate_object()
+
+        if event.name == 'p':
+            pause = not pause
+
 start()

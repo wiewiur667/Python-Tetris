@@ -5,7 +5,6 @@ import gameboard
 import keyboard
 import curses
 
-
 class ConsoleRenderer:
 
     buffer = ''
@@ -13,6 +12,8 @@ class ConsoleRenderer:
     verticalBorderStyle = '░'
     topBorderStyle = '░'
     bottomBorderStyle = '░'
+
+    gamePieceStyle = u'██'
     stdsrc = None
     # .newwin(ConsoleRenderer.height,ConsoleRenderer.width,0,0)
     
@@ -22,8 +23,8 @@ class ConsoleRenderer:
         ConsoleRenderer.stdsrc = curses.initscr()
 
     @staticmethod
-    def renderText(text, line=26):
-        ConsoleRenderer.stdsrc.addstr(line, 0, text, 0)
+    def renderText(text, line=26, col = 0):
+        ConsoleRenderer.stdsrc.addstr(line, col, text, 0)
 
     @staticmethod
     def renderBorder(gameBoard):
@@ -39,12 +40,11 @@ class ConsoleRenderer:
 
     @staticmethod
     def renderBoard(board, offsetX = 0, offsetY= 0):
-        #if(isinstance(boards, list)):
         for row_index, row in enumerate(board):
             for cell_index, cell in enumerate(row):
                 sign = ' '
                 if cell == 1:
-                    sign = u'██'
+                    sign = ConsoleRenderer.gamePieceStyle
                 ConsoleRenderer.stdsrc.addstr(
                     offsetY + row_index + ConsoleRenderer.borderWidth, 
                     offsetX + cell_index * 2 + ConsoleRenderer.borderWidth, 
@@ -54,9 +54,7 @@ class ConsoleRenderer:
     @staticmethod
     def blit():
         ConsoleRenderer.stdsrc.refresh()
-        # sys.stdout.write(ConsoleRenderer.buffer)
 
     @staticmethod
     def clrBuffer():
         ConsoleRenderer.stdsrc.clear()
-        #ConsoleRenderer.buffer = ''

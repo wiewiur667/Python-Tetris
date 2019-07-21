@@ -4,7 +4,8 @@ import gameboard
 import random
 import objects
 import math
-
+import config
+from scoreManager import ScoreManager
 
 class GameEngine:
     def __init__(self, gameBoard):
@@ -16,7 +17,12 @@ class GameEngine:
 
         self.sideCollision = ''
         self.bottomCollision = False
+        
+        self.gameOver = False
 
+        self.scoreManager = ScoreManager(config.multiplierTimeout)
+        self.scoreManager.lineValue = config.initialLineValue
+        
     def create_random_object(self):
         self.nextObject = random.choice(list(objects.gameObject.values()))
 
@@ -31,8 +37,9 @@ class GameEngine:
         self.activeObjectPosition[1] = -1
         self.move_object(0, 0)
         self.create_random_object()
-        
+
     def move_object(self, x, y):
+        self.gameOver = self.detect_game_over()
 
         if self.sideCollision == "left" and x > 0:
             self.activeObjectPosition[0] = self.activeObjectPosition[0] + x
@@ -42,9 +49,10 @@ class GameEngine:
             self.activeObjectPosition[0] = self.activeObjectPosition[0] + x
 
         if self.bottomCollision == True:
-            self.gameBoard.staticObjectsBoard = self.merge_boards(self.gameBoard.activeObjectsBoard, self.gameBoard.staticObjectsBoard)
+            self.gameBoard.staticObjectsBoard = self.merge_boards(
+                self.gameBoard.activeObjectsBoard, self.gameBoard.staticObjectsBoard)
             self.initialize_object_top_center()
-            
+
         self.activeObjectPosition[1] = self.activeObjectPosition[1] + y
 
         self.__move_object_x(self.activeObjectPosition[0])
@@ -57,9 +65,14 @@ class GameEngine:
         tempObject = self.activeObject[:]
         rotated = tempObject[::-1]
         rotated = list(map(list, zip(*rotated)))
-        height = self.__update_object_height()
-        width = self.__update_object_width()
+        height = self.__update_object_height(rotated)
+        width = self.__update_object_width(rotated)
         self.activeObject = rotated
+
+        posDiff = self.gameBoard.width - \
+            (self.activeObjectPosition[0] + self.activeObjectsize[0])
+        if posDiff < 0:
+            self.move_object(posDiff, 0)
 
     def merge_boards(self, board1, board2):
         len_diff = len(board1) - len(board2)
@@ -85,7 +98,12 @@ class GameEngine:
             tempBoard = board.staticObjectsBoard
             for line in linesToRemove:
                 del tempBoard[line]
-                tempBoard.insert(0,[0]*board.width)
+                tempBoard.insert(0, [0]*board.width)
+            self.scoreManager.updateScore(len(linesToRemove) * config.initialLineValue)
+            
+    def detect_game_over(self):
+        if self.__get_stack_height(self.gameBoard) >= self.gameBoard.height:
+            return True 
 
     def __move_object_x(self, offset):
         paddedObject = list()
@@ -111,17 +129,21 @@ class GameEngine:
 
         self.gameBoard.activeObjectsBoard = tempBoard
 
-    def __update_object_width(self):
+    def __update_object_width(self, gameObject=None):
+        if gameObject == None:
+            gameObject = self.activeObject
         objectWidth = 0
-        for objectRow in self.activeObject:
+        for objectRow in gameObject:
             if len(list(filter(lambda x: x == 1, objectRow))) > objectWidth:
                 objectWidth = len(objectRow)
         self.activeObjectsize[0] = objectWidth
         return objectWidth
 
-    def __update_object_height(self):
+    def __update_object_height(self, gameObject=None):
+        if gameObject == None:
+            gameObject = self.activeObject
         objectHeight = 0
-        objectHeight = len(self.activeObject)
+        objectHeight = len(gameObject)
         self.activeObjectsize[1] = objectHeight
         return objectHeight
 
@@ -150,4 +172,11 @@ class GameEngine:
         for index, row in enumerate(board.staticObjectsBoard):
             if row == [1]*board.width:
                 lines.append(index)
+        return lines
+
+    def __get_stack_height(self, board): 
+        lines = 0
+        for index, row in enumerate(board.staticObjectsBoard):
+            if 1 in row:
+                lines = lines + 1
         return lines
