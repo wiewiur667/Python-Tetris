@@ -1,9 +1,8 @@
 import os
-import sys
-import time
 import gameboard
-import keyboard
 import curses
+
+from colours import Colours
 
 class ConsoleRenderer:
 
@@ -21,6 +20,17 @@ class ConsoleRenderer:
     def start():
         os.system("mode con lines=40")
         ConsoleRenderer.stdsrc = curses.initscr()
+
+        curses.start_color()
+
+        #curses.init_color(curses.COLOR_BLACK, 255,201,14)
+        curses.init_pair(Colours.AQUA.value, curses.COLOR_CYAN, curses.COLOR_MAGENTA)
+        curses.init_pair(Colours.BLUE.value, curses.COLOR_BLUE, curses.COLOR_MAGENTA)
+        curses.init_pair(Colours.ORANGE.value, curses.COLOR_WHITE, curses.COLOR_MAGENTA)
+        curses.init_pair(Colours.YELLOW.value, curses.COLOR_YELLOW, curses.COLOR_MAGENTA)
+        curses.init_pair(Colours.GREEN.value, curses.COLOR_GREEN, curses.COLOR_MAGENTA)
+        curses.init_pair(Colours.PURPLE.value, curses.COLOR_MAGENTA, curses.COLOR_MAGENTA)
+        curses.init_pair(Colours.RED.value, curses.COLOR_RED, curses.COLOR_MAGENTA)
 
     @staticmethod
     def renderText(text, line=26, col = 0):
@@ -43,13 +53,14 @@ class ConsoleRenderer:
         for row_index, row in enumerate(board):
             for cell_index, cell in enumerate(row):
                 sign = ' '
-                if cell == 1:
+                if cell >= 1:
                     sign = ConsoleRenderer.gamePieceStyle
-                ConsoleRenderer.stdsrc.addstr(
+
+                    ConsoleRenderer.stdsrc.addstr(
                     offsetY + row_index + ConsoleRenderer.borderWidth, 
                     offsetX + cell_index * 2 + ConsoleRenderer.borderWidth, 
                     sign, 
-                    0)
+                    curses.color_pair(cell))
 
     @staticmethod
     def blit():

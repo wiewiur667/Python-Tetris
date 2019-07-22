@@ -6,6 +6,7 @@ class ScoreManager:
     multiplierTimeout = 0
     multiplierTimeoutClock = 0
     lineValue = 0
+    linesRemoved = 0
 
     def __init__(self, multiplierTimeout):
         self.multiplierTimeout = multiplierTimeout
@@ -19,4 +20,3 @@ class ScoreManager:
 
     def updateScore(self, score):
         self.currentScore = self.currentScore + score * (self.currentMultiplier)
-        

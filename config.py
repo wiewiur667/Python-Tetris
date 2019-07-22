@@ -1,7 +1,7 @@
 fps = 60
-configFallingSpeed = 20
+configFallingSpeed = 48
 
 #Score
 maxMultiplier = 8
 multiplierTimeout = 5
-initialLineValue = 500
+initialLineValue = 100

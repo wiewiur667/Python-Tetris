@@ -6,12 +6,13 @@ import objects
 import math
 import config
 from scoreManager import ScoreManager
-
+import tetrominos
+from copy import deepcopy
 class GameEngine:
     def __init__(self, gameBoard):
         self.gameBoard = gameBoard
-        self.nextObject = list()
-        self.activeObject = list()
+        self.nextObject = None
+        self.activeObject = None
         self.activeObjectsize = [0, 0]
         self.activeObjectPosition = [0, 0]
 
@@ -24,10 +25,11 @@ class GameEngine:
         self.scoreManager.lineValue = config.initialLineValue
         
     def create_random_object(self):
-        self.nextObject = random.choice(list(objects.gameObject.values()))
+        self.nextObject = deepcopy(random.choice(list(tetrominos.tetrominos.values())))
+        self.nextObject.shape =  [[j * self.nextObject.colour.value for j in i] for i in self.nextObject.shape]
 
     def assign_next_object_to_current(self):
-        self.activeObject = self.nextObject
+        self.activeObject = deepcopy(self.nextObject)
 
     def initialize_object_top_center(self):
         self.bottomCollision = False
@@ -62,17 +64,17 @@ class GameEngine:
         self.bottomCollision = self.__detect_bottom_collision(self.gameBoard)
 
     def rotate_object(self):
-        tempObject = self.activeObject[:]
+        tempObject = self.activeObject.shape[:]
         rotated = tempObject[::-1]
         rotated = list(map(list, zip(*rotated)))
         height = self.__update_object_height(rotated)
         width = self.__update_object_width(rotated)
-        self.activeObject = rotated
+        self.activeObject.shape = rotated
 
-        posDiff = self.gameBoard.width - \
-            (self.activeObjectPosition[0] + self.activeObjectsize[0])
+        posDiff = self.gameBoard.width - (self.activeObjectPosition[0] + self.activeObjectsize[0])
         if posDiff < 0:
             self.move_object(posDiff, 0)
+        self.move_object(0,0)
 
     def merge_boards(self, board1, board2):
         len_diff = len(board1) - len(board2)
@@ -100,7 +102,8 @@ class GameEngine:
                 del tempBoard[line]
                 tempBoard.insert(0, [0]*board.width)
             self.scoreManager.updateScore(len(linesToRemove) * config.initialLineValue)
-            
+        self.scoreManager.linesRemoved += len(linesToRemove)
+
     def detect_game_over(self):
         if self.__get_stack_height(self.gameBoard) >= self.gameBoard.height:
             return True 
@@ -108,7 +111,7 @@ class GameEngine:
     def __move_object_x(self, offset):
         paddedObject = list()
 
-        for objectRow in self.activeObject:
+        for objectRow in self.activeObject.shape:
             tempRow = objectRow[:]
             if offset >= 0:
                 for paddingX in range(offset):
@@ -131,7 +134,7 @@ class GameEngine:
 
     def __update_object_width(self, gameObject=None):
         if gameObject == None:
-            gameObject = self.activeObject
+            gameObject = self.activeObject.shape
         objectWidth = 0
         for objectRow in gameObject:
             if len(list(filter(lambda x: x == 1, objectRow))) > objectWidth:
@@ -141,7 +144,7 @@ class GameEngine:
 
     def __update_object_height(self, gameObject=None):
         if gameObject == None:
-            gameObject = self.activeObject
+            gameObject = self.activeObject.shape
         objectHeight = 0
         objectHeight = len(gameObject)
         self.activeObjectsize[1] = objectHeight
@@ -151,8 +154,8 @@ class GameEngine:
         colliding = False
         for row_index, row in enumerate(board.activeObjectsBoard):
             for cell_index, cell in enumerate(row):
-                if cell == 1 and colliding == False:
-                    if row_index == len(board.staticObjectsBoard) - 1 or board.staticObjectsBoard[row_index+1][cell_index] == 1:
+                if cell >= 1 and colliding == False:
+                    if row_index == len(board.staticObjectsBoard) - 1 or board.staticObjectsBoard[row_index+1][cell_index] >= 1:
                         colliding = True
         return colliding
 
@@ -160,17 +163,21 @@ class GameEngine:
         colliding = ""
         for row_index, row in enumerate(board.activeObjectsBoard):
             for cell_index, cell in enumerate(row):
-                if cell == 1:
-                    if cell_index == 0 or board.staticObjectsBoard[row_index][cell_index - 1] == 1:
+                if cell >= 1:
+                    if cell_index == 0 or board.staticObjectsBoard[row_index][cell_index - 1] >= 1:
                         colliding = "left"
-                    if cell_index == len(board.staticObjectsBoard[0]) - 1 or board.staticObjectsBoard[row_index][cell_index + 1] == 1:
+                    if cell_index == len(board.staticObjectsBoard[0]) - 1 or board.staticObjectsBoard[row_index][cell_index + 1] >= 1:
                         colliding = "right"
         return colliding
 
     def __detect_full_line(self, board):
         lines = list()
         for index, row in enumerate(board.staticObjectsBoard):
-            if row == [1]*board.width:
+            isFullRow = True
+            for cell in row:
+                if cell < 1:
+                    isFullRow = False
+            if isFullRow == True:
                 lines.append(index)
         return lines
 
